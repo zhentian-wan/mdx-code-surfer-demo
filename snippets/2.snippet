@@ -1,0 +1,87 @@
+/**
+ * Create restaurant HTML.
+ */
+const createRestaurantHTML = restaurant => {
+    const li = document.createElement('li');
+
+    const image = document.createElement('picture');
+
+    DBHelper.getSourcesForRestaurant(restaurant).map(el => {
+        el.setAttribute('alt', 'Picture of ' + restaurant.name + " restaurant");
+        image.append(el);
+    });
+    image.className = 'restaurant-img';
+    li.append(image);
+    observer.observe(image);
+
+    const info = document.createElement('div');
+    info.className = 'restaurant-info';
+
+    const name = document.createElement('h3');
+    name.innerHTML = restaurant.name;
+    name.id = `restaurant-item-${restaurant.id}`;
+    info.append(name);
+
+    const star = document.createElement('i');
+    const likeContent = "★";
+    const likeClass = "restaurant-star toggle-star";
+    const normalContent = "☆";
+    const normalClass = "restaurant-star";
+    star.className = restaurant.is_favorite ? likeClass : normalClass;
+    star.innerHTML = restaurant.is_favorite ? likeContent : normalContent;
+    star.addEventListener('click', (e) => {
+        e.preventDefault();
+        let isFavorite;
+        if (!star.classList.contains('toggle-star')) {
+            star.innerHTML = "★";
+            star.classList.add('toggle-star');
+            isFavorite = true;
+        } else {
+            star.innerHTML = "☆";
+            star.classList.remove('toggle-star');
+            isFavorite = false;
+        }
+        DBHelper.markRestaurantAsFavorite(isFavorite, restaurant.id);
+    });
+    info.append(star);
+
+    const neighborhood = document.createElement('p');
+    neighborhood.innerHTML = restaurant.neighborhood;
+    info.append(neighborhood);
+
+    const address = document.createElement('p');
+    address.innerHTML = restaurant.address;
+    info.append(address);
+
+    const more = document.createElement('a');
+    more.innerHTML = 'View Details';
+    more.href = DBHelper.urlForRestaurant(restaurant);
+    more.setAttribute('aria-labelledby', `restaurant-detail-${restaurant.id}`);
+    info.append(more);
+
+    const detail = document.createElement('span');
+    detail.hidden = true;
+    detail.id = `restaurant-detail-${restaurant.id}`;
+    detail.innerHTML = `Restaurant name: ${restaurant.name}, address:${
+        restaurant.address
+        }, click the link to view detail`;
+
+    li.appendChild(detail);
+    li.append(info);
+
+    return li;
+};
+
+/**
+ * Add markers for current restaurants to the map.
+ */
+const addMarkersToMap = (restaurants = self.restaurants) => {
+    restaurants.forEach(restaurant => {
+        // Add marker to the map
+        const marker = DBHelper.mapMarkerForRestaurant(restaurant, self.map);
+        google.maps.event.addListener(marker, 'click', () => {
+            window.location.href = marker.url;
+        });
+        self.markers.push(marker);
+    });
+};
